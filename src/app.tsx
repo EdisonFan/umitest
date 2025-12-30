@@ -5,35 +5,49 @@ import { routeManager } from './utils/routeManager';
 import { history } from 'umi';
 import PageLoading from '@/components/PageLoading';
 
+// 从本地缓存恢复动态路由，仅在应用启动阶段使用
+function initRoutesFromStorageOnce() {
+  if (routeManager.getRoutes().length > 0) return;
+  try {
+    const stored = localStorage.getItem('routers');
+    if (!stored) return;
+    const parsed = JSON.parse(stored);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      routeManager.setRoutes(parsed as RouteConfig[]);
+    }
+  } catch (error) {
+    // 解析失败时忽略本地缓存，避免影响应用启动
+    // console.error('Failed to restore routes from localStorage', error);
+  }
+}
+
 // 修改路由
 export function patchRoutes({ routes }: { routes: RouteConfig[] }) {
-  // 从 routeManager 获取路由，如果没有则从 localStorage 恢复
-  const dynamicRoutes = routeManager.getRoutes().length > 0 
-    ? routeManager.getRoutes() 
-    : JSON.parse(localStorage.getItem('routers') || '[]');
-
-  // 如果从 localStorage 恢复了路由，更新 routeManager
-  if (dynamicRoutes.length > 0 && routeManager.getRoutes().length === 0) {
-    routeManager.setRoutes(dynamicRoutes);
-  }
+  // 此时只从 routeManager 获取动态路由，具体数据来源（接口 / localStorage）
+  // 在应用初始化阶段统一处理
+  const dynamicRoutes = routeManager.getRoutes();
 
   if (dynamicRoutes.length > 0) {
-    const rootRoute = routes.find(route => route.path === '/');
+    const rootRoute = routes.find((route) => route.path === '/');
     if (rootRoute && rootRoute.routes) {
-      rootRoute.routes = dynamicRoutes.map(route => ({
+      rootRoute.routes = dynamicRoutes.map((route) => ({
         ...route,
-        component: lazy(() => import(`./pages/${route.component.split('/').pop()}`))
+        component: lazy(
+          () => import(`./pages/${route.component.split('/').pop()}`),
+        ),
       }));
     }
-    console.log(routes,'routes');
+    console.log(routes, 'routes');
   }
 }
 
 // 动态添加路由
 export function render(oldRender: () => void) {
-  // 监听路由更新
+  // 应用启动时先尝试从本地缓存恢复动态路由
+  initRoutesFromStorageOnce();
+
+  // 监听路由更新，路由变化时重新渲染应用
   routeManager.onRoutesUpdate(() => {
-    // 重新渲染应用
     oldRender();
   });
   oldRender();

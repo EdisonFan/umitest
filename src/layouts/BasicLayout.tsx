@@ -13,19 +13,29 @@ const BasicLayout: React.FC = ({ children }) => {
   const [menuItems, setMenuItems] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!token) {
-      return;
-    }
-    
-    const routers = JSON.parse(localStorage.getItem('routers') || '[]');
-    // routeManager.setRoutes(routers);
-    setMenuItems(
-      routers.map((item: any) => ({
-        key: item.path,
-        icon: item.icon || <HomeOutlined />, // 默认图标
-        label: <Link to={item.path}>{item.name}</Link>,
-      }))
-    );
+    if (!token) return;
+
+    const updateMenuFromRoutes = (routes: any[]) => {
+      setMenuItems(
+        routes.map((item: any) => ({
+          key: item.path,
+          icon: item.icon || <HomeOutlined />, // 默认图标
+          label: <Link to={item.path}>{item.name}</Link>,
+        })),
+      );
+    };
+
+    // 先用当前内存中的路由初始化一次菜单
+    updateMenuFromRoutes(routeManager.getRoutes());
+
+    // 监听后续动态路由更新
+    const unsubscribe = routeManager.onRoutesUpdate(updateMenuFromRoutes);
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [token]);
 
   if (!token) {
