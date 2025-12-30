@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Typography } from 'antd';
+import { Card, Input, Typography } from 'antd';
 
 const { Title, Paragraph } = Typography;
 
@@ -11,6 +11,9 @@ export default function AboutPage() {
         <Paragraph>
           这是一个示例页面，展示了如何使用 UmiJS 和 Ant Design 构建现代化的 React 应用。
         </Paragraph>
+        <Input
+          placeholder="请输入"
+        />
       </Typography>
     </Card>
   );

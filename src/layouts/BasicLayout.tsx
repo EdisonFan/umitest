@@ -2,19 +2,25 @@ import React, { Suspense, useEffect, useState } from 'react';
 import { Layout, Menu } from 'antd';
 import { Link, Redirect, useLocation } from 'umi';
 import { HomeOutlined } from '@ant-design/icons';
+import KeepAlive, { useKeepAliveRef } from 'react-activation';
 import PageLoading from '@/components/PageLoading';
 import { routeManager } from '@/utils/routeManager';
+import { TabProvider } from '@/features/tab/TabContext';
+import { useTabManager } from '@/features/tab/tabHooks';
+import TabView from '@/components/TabView/TabView';
+import GlobalContent from './GlobalContent';
 
 const { Header, Content, Footer } = Layout;
 
-const BasicLayout: React.FC = ({ children }) => {
+// 内部布局组件（使用 TabProvider）
+const BasicLayoutInner: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
-  const token = localStorage.getItem('token');
   const [menuItems, setMenuItems] = useState<any[]>([]);
 
-  useEffect(() => {
-    if (!token) return;
+  // 标签页管理器 - 自动根据路由创建标签页
+  useTabManager();
 
+  useEffect(() => {
     const updateMenuFromRoutes = (routes: any[]) => {
       setMenuItems(
         routes.map((item: any) => ({
@@ -36,11 +42,7 @@ const BasicLayout: React.FC = ({ children }) => {
         unsubscribe();
       }
     };
-  }, [token]);
-
-  if (!token) {
-    return <Redirect to="/login" />;
-  }
+  }, []);
 
   return (
     <Layout className="layout" style={{ minHeight: '100vh' }}>
@@ -53,10 +55,12 @@ const BasicLayout: React.FC = ({ children }) => {
           items={menuItems}
         />
       </Header>
-      <Content style={{ padding: '0 50px', marginTop: 64 }}>
+      {/* 标签页区域 */}
+      <TabView />
+      <Content style={{ padding: '0 50px', marginTop: 0 }}>
         <div style={{ background: '#fff', padding: 24, minHeight: 380 }}>
           <Suspense fallback={<PageLoading />}>
-            {children}
+            <GlobalContent>{children}</GlobalContent>
           </Suspense>
         </div>
       </Content>
@@ -64,6 +68,20 @@ const BasicLayout: React.FC = ({ children }) => {
         Umi Demo ©2024 Created by Your Name
       </Footer>
     </Layout>
+  );
+};
+
+const BasicLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    return <Redirect to="/login" />;
+  }
+
+  return (
+    <TabProvider>
+      <BasicLayoutInner>{children}</BasicLayoutInner>
+    </TabProvider>
   );
 };
 

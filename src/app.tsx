@@ -67,11 +67,15 @@ export const request: RequestConfig = {
   timeout: 1,
 };
 
-// 包装应用程序的根组件以支持 Suspense
-// export function rootContainer(container: React.ReactNode) {
-//   return (
-//     <Suspense fallback={<PageLoading />}>
-//       {container}
-//     </Suspense>
-//   );
-// } 
+// 包装应用程序的根组件以支持 Suspense 和 react-activation
+import { AliveScope } from 'react-activation';
+
+export function rootContainer(container: React.ReactNode) {
+  return (
+    <AliveScope>
+      <Suspense fallback={<PageLoading />}>
+        {container}
+      </Suspense>
+    </AliveScope>
+  );
+} 
