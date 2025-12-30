@@ -17,5 +17,9 @@ export default defineConfig({
   dynamicImport: {
     loading: '@/components/PageLoading',
   },
+  dva: {
+    immer: true,
+    hmr: true,
+  },
   mfsu: {}
 }); 

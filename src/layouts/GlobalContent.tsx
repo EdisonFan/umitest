@@ -2,9 +2,9 @@
  * 全局内容组件 - 集成 KeepAlive
  */
 import React from 'react';
-import { useLocation } from 'umi';
+import { useLocation, useSelector } from 'umi';
 import KeepAlive from 'react-activation';
-import { useTabContext } from '@/features/tab/TabContext';
+import { TabModelState } from '@/models/tab';
 
 interface GlobalContentProps {
   children: React.ReactNode;
@@ -14,11 +14,11 @@ const GlobalContent: React.FC<GlobalContentProps> = ({ children }) => {
   const location = useLocation();
   const { pathname, search } = location;
   const fullPath = pathname + search;
-  const { state } = useTabContext();
+  const tabs = useSelector((state: { tab: TabModelState }) => state.tab.tabs);
 
   // 获取当前标签页的 keepAlive 状态
-  const currentTab = state.tabs.find(tab => tab.id === fullPath);
-  const keepAlive = currentTab?.keepAlive ?? true; // 默认启用缓存
+  const currentTab = tabs.find(tab => tab.id === fullPath);
+  const keepAlive = currentTab?.keepAlive ?? true;
 
   return (
     <KeepAlive

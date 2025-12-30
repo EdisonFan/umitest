@@ -5,17 +5,16 @@ import { HomeOutlined } from '@ant-design/icons';
 import KeepAlive, { useKeepAliveRef } from 'react-activation';
 import PageLoading from '@/components/PageLoading';
 import { routeManager } from '@/utils/routeManager';
-import { TabProvider } from '@/features/tab/TabContext';
 import { useTabManager } from '@/features/tab/tabHooks';
 import TabView from '@/components/TabView/TabView';
 import GlobalContent from './GlobalContent';
 
 const { Header, Content, Footer } = Layout;
 
-// 内部布局组件（使用 TabProvider）
-const BasicLayoutInner: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const BasicLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const [menuItems, setMenuItems] = useState<any[]>([]);
+  const token = localStorage.getItem('token');
 
   // 标签页管理器 - 自动根据路由创建标签页
   useTabManager();
@@ -25,16 +24,14 @@ const BasicLayoutInner: React.FC<{ children: React.ReactNode }> = ({ children })
       setMenuItems(
         routes.map((item: any) => ({
           key: item.path,
-          icon: item.icon || <HomeOutlined />, // 默认图标
+          icon: item.icon || <HomeOutlined />,
           label: <Link to={item.path}>{item.name}</Link>,
         })),
       );
     };
 
-    // 先用当前内存中的路由初始化一次菜单
     updateMenuFromRoutes(routeManager.getRoutes());
 
-    // 监听后续动态路由更新
     const unsubscribe = routeManager.onRoutesUpdate(updateMenuFromRoutes);
 
     return () => {
@@ -43,6 +40,10 @@ const BasicLayoutInner: React.FC<{ children: React.ReactNode }> = ({ children })
       }
     };
   }, []);
+
+  if (!token) {
+    return <Redirect to="/login" />;
+  }
 
   return (
     <Layout className="layout" style={{ minHeight: '100vh' }}>
@@ -55,7 +56,6 @@ const BasicLayoutInner: React.FC<{ children: React.ReactNode }> = ({ children })
           items={menuItems}
         />
       </Header>
-      {/* 标签页区域 */}
       <TabView />
       <Content style={{ padding: '0 50px', marginTop: 0 }}>
         <div style={{ background: '#fff', padding: 24, minHeight: 380 }}>
@@ -68,20 +68,6 @@ const BasicLayoutInner: React.FC<{ children: React.ReactNode }> = ({ children })
         Umi Demo ©2024 Created by Your Name
       </Footer>
     </Layout>
-  );
-};
-
-const BasicLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const token = localStorage.getItem('token');
-
-  if (!token) {
-    return <Redirect to="/login" />;
-  }
-
-  return (
-    <TabProvider>
-      <BasicLayoutInner>{children}</BasicLayoutInner>
-    </TabProvider>
   );
 };
 
